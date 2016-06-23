@@ -13,30 +13,31 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import itertools
 import signal
 import sys
 import time
-import itertools
 
-from neutron import context
+from neutron.agent.common import polling
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
-from neutron.agent.common import polling
 from neutron.common import config as common_config
 from neutron.common import constants as n_const
-from neutron.common import utils
 from neutron.common import topics
+from neutron.common import utils
+from neutron import context
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_service import loopingcall
 import oslo_messaging
+from oslo_service import loopingcall
 
-from networking_vsphere._i18n import _, _LE, _LI
 from networking_vsphere.agent.firewalls import dvs_securitygroup_rpc as dvs_rpc
 from networking_vsphere.common import constants as dvs_const
 from networking_vsphere.common import dvs_agent_rpc_api
 from networking_vsphere.common import exceptions
 from networking_vsphere.utils import dvs_util
+from networking_vsphere._i18n import _, _LE, _LI
+
 
 LOG = logging.getLogger(__name__)
 cfg.CONF.import_group('DVS_AGENT',
@@ -71,8 +72,8 @@ class DVSAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         # Security group agent support
         self.context = context.get_admin_context_without_session()
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.sg_agent = dvs_rpc.DVSSecurityGroupRpc(self.context,
-                self.sg_plugin_rpc, defer_refresh_firewall=True)
+        self.sg_agent = dvs_rpc.DVSSecurityGroupRpc(
+            self.context, self.sg_plugin_rpc, defer_refresh_firewall=True)
 
         self.setup_rpc()
         if report_interval:

@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from time import sleep
 import six
+from time import sleep
 
 from neutron.agent import securitygroups_rpc
 from neutron.common import constants as n_const
@@ -86,22 +86,22 @@ class VMwareDVSMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         if CONF.DVS.precreate_networks and self._check_net_type(context):
             LOG.info(_LI('Precreate network cast'))
             self.dvs_notifier.create_network_cast(context.current,
-                context.network_segments[0])
-            #need to wait for agents. Cast message
+                                                  context.network_segments[0])
+            # need to wait for agents. Cast message
             sleep(2)
 
     def update_network_precommit(self, context):
         if self._check_net_type(context):
             self.dvs_notifier.update_network_cast(
                 context.current, context.network_segments[0], context.original)
-            #need to wait for agents. Cast message
+            # need to wait for agents. Cast message
             sleep(2)
 
     def delete_network_postcommit(self, context):
         if self._check_net_type(context):
             self.dvs_notifier.delete_network_cast(
                 context.current, context.network_segments[0])
-            #need to wait for agents. Cast message
+            # need to wait for agents. Cast message
             sleep(2)
 
     @port_belongs_to_vmware

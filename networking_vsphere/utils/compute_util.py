@@ -34,7 +34,7 @@ def get_hypervisors_by_host(cfg, host):
 
 def _make_nova_client(cfg):
 
-    auth_url=cfg.nova.auth_url
+    auth_url = cfg.nova.auth_url
     if auth_url[-1] != '/':
         auth_url = auth_url + '/'
     params = dict(

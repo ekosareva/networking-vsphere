@@ -210,10 +210,12 @@ class DVSControllerTestCase(DVSControllerBaseTestCase):
                              'id': 'port_with_dvs_key'}
         port = {'id': 'fake_port_id'}
 
-        with mock.patch.object(self.controller, '_get_port_info_by_portkey') \
-                               as get_port_info_by_key_mock, \
-            mock.patch.object(self.controller, '_get_port_info_by_name') as \
-                              get_port_info_by_name_mock:
+        with mock.patch.object(
+                self.controller,
+                '_get_port_info_by_portkey') as get_port_info_by_key_mock, \
+            mock.patch.object(
+                self.controller,
+                '_get_port_info_by_name') as get_port_info_by_name_mock:
             self.controller.get_port_info(port_with_dvs_key)
             get_port_info_by_key_mock.assert_called_once_with(0)
             get_port_info_by_name_mock.assert_not_called()

@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import six
 from time import sleep
 import uuid
-import six
 
 from oslo_log import log
 from oslo_vmware import api
@@ -235,9 +235,9 @@ class DVSController(object):
             update_spec = self.builder.port_config_spec(
                 port_info.config.configVersion, name='')
             update_spec.key = port_info.key
-            #setting = self.builder.port_setting()
-            #setting.filterPolicy = self.builder.filter_policy([])
-            #update_spec.setting = setting
+            # setting = self.builder.port_setting()
+            # setting.filterPolicy = self.builder.filter_policy([])
+            # update_spec.setting = setting
             update_spec.operation = 'remove'
             self.connection.invoke_api(
                 self.connection.vim, 'ReconfigureDVPort_Task',
@@ -355,8 +355,8 @@ class DVSController(object):
         try:
             return self._get_pg_by_name(pg_name)
         except exceptions.PortGroupNotFound:
-            LOG.debug(_LI('Network %s is not present in vcenter. '
-                          'Perform network creation' % pg_name))
+            LOG.debug('Network %s is not present in vcenter. Perform network '
+                      'creation' % pg_name)
             return self.create_network(network, segment)
 
     def _get_config_by_ref(self, ref):
@@ -409,7 +409,7 @@ class DVSController(object):
 
     def _increase_ports_on_portgroup(self, port_group):
         pg_info = self._get_config_by_ref(port_group)
-        #TODO(ekosareva): need to have max size of ports number
+        # TODO(ekosareva): need to have max size of ports number
         ports_number = max(INIT_PG_PORTS_COUNT, pg_info.numPorts * 2)
         pg_spec = self._build_pg_update_spec(
             pg_info.configVersion, ports_number=ports_number)
@@ -445,7 +445,7 @@ class DVSController(object):
         if not ports:
             raise exceptions.PortNotFound(id=name)
         if len(ports) > 1:
-            LOG.warn(_LW("Multiple ports found for name %s."), name)
+            LOG.warning(_LW("Multiple ports found for name %s."), name)
         return ports[0]
 
     def get_ports(self, connect_flag=True):
@@ -565,7 +565,7 @@ class DVSControllerWithCache(DVSController):
         raise exceptions.PortGroupNotFound(pg_name=pg_name)
 
     def _increase_ports_on_portgroup(self, port_group):
-        pg_name = next((name for name, pg in self._pg_cache.iteritems()
+        pg_name = next((name for name, pg in six.iteritems(self._pg_cache)
                         if pg.get('pg_key') == port_group.value), None)
         prev_status = self._pg_cache.get(pg_name, {}).get('status')
         self._wait_port_group_stable_status(pg_name)
@@ -589,7 +589,7 @@ class DVSControllerWithCache(DVSController):
             'free_cached_ports': free_port_keys[:FREE_PORTS_CACHE_SIZE]})
 
     def _lookup_unbound_port(self, port_group):
-        pg_name = next((name for name, pg in self._pg_cache.iteritems()
+        pg_name = next((name for name, pg in six.iteritems(self._pg_cache)
                         if pg.get('pg_key') == port_group.value), None)
         self._wait_port_group_stable_status(pg_name)
 
@@ -658,10 +658,7 @@ def get_dvs_by_network(dvs_list, network_id):
 
 
 def wrap_retry(func):
-    """
-    Retry operation on dvs when concurrent modification by another operation
-    was discovered
-    """
+    """Retry operation on dvs when concurrent modification was discovered."""
     @six.wraps(func)
     def wrapper(*args, **kwargs):
         login_failures = 0
