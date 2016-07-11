@@ -76,24 +76,35 @@ class DVSAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
             self.context, self.sg_plugin_rpc, defer_refresh_firewall=True)
 
         self.setup_rpc()
-        if report_interval:
-            heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
-            heartbeat.start(interval=report_interval)
         self.run_daemon_loop = True
         self.iter_num = 0
-        self.fullsync = True
 
         self.quitting_rpc_timeout = quitting_rpc_timeout
         self.network_map = dvs_util.create_network_map_from_config(
             cfg.CONF.ML2_VMWARE, pg_cache=True)
+        uplink_map = dvs_util.create_uplink_map_from_config(
+            cfg.CONF.ML2_VMWARE, self.network_map)
+        for phys, dvs in self.network_map.iteritems():
+            if phys in uplink_map:
+                dvs.load_uplinks(phys, uplink_map[phys])
         self.updated_ports = set()
         self.deleted_ports = set()
         self.known_ports = set()
         self.added_ports = set()
         self.booked_ports = set()
+        LOG.info(_LI("Agent out of sync with plugin!"))
+        connected_ports = self._get_dvs_ports()
+        self.added_ports = connected_ports
+        if cfg.CONF.DVS.clean_on_restart:
+            self._clean_up_vsphere_extra_resources(connected_ports)
+        self.fullsync = False
+
         # The initialization is complete; we can start receiving messages
         self.connection.consume_in_threads()
+        if report_interval:
+            heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
+            heartbeat.start(interval=report_interval)
 
     @dvs_util.wrap_retry
     def create_network_precommit(self, current, segment):
@@ -392,7 +403,8 @@ def create_agent_config_map(config):
     :returns: a map of agent configuration parameters
     """
     try:
-        bridge_mappings = utils.parse_mappings(config.ML2_VMWARE.network_maps)
+        bridge_mappings = utils.parse_mappings(config.ML2_VMWARE.network_maps,
+            unique_values=False)
     except ValueError as e:
         raise ValueError(_("Parsing network_maps failed: %s.") % e)
 

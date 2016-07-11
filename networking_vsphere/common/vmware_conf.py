@@ -19,6 +19,7 @@ from networking_vsphere._i18n import _
 from neutron.agent.common import config
 
 DEFAULT_BRIDGE_MAPPINGS = []
+DEFAULT_UPLINK_MAPPINGS = []
 DEFAULT_VLAN_RANGES = []
 DEFAULT_TUNNEL_RANGES = []
 DEFAULT_TUNNEL_TYPES = []
@@ -32,7 +33,7 @@ agent_opts = [
                       "agent receives SIGTERM. If value is set to 0, rpc "
                       "timeout won't be changed")),
     cfg.BoolOpt('log_agent_heartbeats', default=False,
-                help=_("Log agent heartbeats")),
+               help=_("Log agent heartbeats")),
     cfg.IntOpt('report_interval',
                default=30,
                help='Seconds between nodes reporting state to server.'),
@@ -56,8 +57,13 @@ vmware_opts = [
     cfg.StrOpt('vsphere_login', default='administrator',
                help=_("Vsphere login.")),
     cfg.ListOpt('network_maps',
-                default=DEFAULT_BRIDGE_MAPPINGS,
-                help=_("List of <physical_network>:<bridge>.")),
+               default=DEFAULT_BRIDGE_MAPPINGS,
+               help=_("List of <physical_network>:<bridge>.")),
+    cfg.ListOpt('uplink_maps',
+               default=DEFAULT_UPLINK_MAPPINGS,
+               help=_("List of <physical_network>:<active uplinks>:"
+                      "<failover uplinks>."
+                      "Use semicolon between uplink names")),
     cfg.StrOpt('vsphere_hostname', default='vsphere',
                help=_("Vsphere host name or IP.")),
     cfg.StrOpt('vsphere_password', default='',
@@ -66,11 +72,11 @@ vmware_opts = [
 
 dvs_opts = [
     cfg.BoolOpt('clean_on_restart',
-                default=True,
-                help=_("Run DVS cleaning procedure on agent restart.")),
+               default=True,
+               help=_("Run DVS cleaning procedure on agent restart.")),
     cfg.BoolOpt('precreate_networks',
-                default=False,
-                help=_("Precreate networks on DVS")),
+               default=False,
+               help=_("Precreate networks on DVS")),
 ]
 
 cfg.CONF.register_opts(dvs_opts, "DVS")

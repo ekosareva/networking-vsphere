@@ -30,7 +30,7 @@ from networking_vsphere.common import constants as dvs_const
 from networking_vsphere.common import dvs_agent_rpc_api
 from networking_vsphere.common import exceptions
 from networking_vsphere.common import vmware_conf as config
-from networking_vsphere.utils import compute_util
+from networking_vsphere.utils import db
 
 CONF = config.CONF
 LOG = log.getLogger(__name__)
@@ -41,18 +41,19 @@ def port_belongs_to_vmware(func):
     def _port_belongs_to_vmware(self, context):
         port = context.current
         try:
-            try:
-                host = port['binding:host_id']
-            except KeyError:
-                raise exceptions.HypervisorNotFound
+            if port['binding:vif_type'] == 'dvs':
+                return func(self, context)
+            elif port['binding:vif_type'] == 'unbound':
+                try:
+                    host = port['binding:host_id']
+                except KeyError:
+                    raise exceptions.HypervisorNotFound
 
-            hypervisor = compute_util.get_hypervisors_by_host(
-                CONF, host)
-
-            # value for field hypervisor_type collected from VMWare itself,
-            # need to make research, about all possible and suitable values
-            if hypervisor.hypervisor_type != dvs_const.VMWARE_HYPERVISOR_TYPE:
-                raise exceptions.HypervisorNotFound
+                agent = db.get_agent_by_host(host)
+                if not agent:
+                    raise exceptions.HypervisorNotFound
+            else:
+                return False
         except exceptions.ResourceNotFound:
             return False
         return func(self, context)
